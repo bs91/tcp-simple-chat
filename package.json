@@ -1,0 +1,13 @@
+{
+  "name": "tcp-simple-chat",
+  "description": "A very simple tcp chat server.",
+  "author": "xxblakefailxx<xxblakefailxx@gmail.com>",
+  "repository": {"type": "git", "url": "git@github.com:xxblakefailxx/tcp-simple-chat.git"},
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "jasmine-node": "1.5.0",
+    "requirejs": "2.1.5"
+  },
+  "main": "./server.js"
+}
