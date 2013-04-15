@@ -2,18 +2,30 @@ if (typeof define !== 'function') { var define = require('amdefine')(module) }
 
 define(["../lib/tcp-simple-chat-tools.js"], function(tools) {
   describe("tcp-simple-chat-tools", function() {
-    describe("Socket", function() { 
-      var Socket = tools.Socket;
-      var test;
+    var Socket = tools.Socket;
+    var generateID = tools.generateID;
+    var broadcast = tools.broadcast;
+    var userCommand = tools.userCommand;
+    
+    var test;    
+    var socket;
+    var sockets = {};
+    var writeData;
 
-      beforeEach(function() {
-        test = new Socket("testName", {"test": "test"});
-      });
+    beforeEach(function() {
+      test = new Socket("testName", {"testProp": "testVal"}); 
+      socket = test;
+      sockets[generateID()] = test;
+      sockets[generateID()] = new Socket("test2", {"test2Prop": "test2Val"});
+      writeData = "Random string test data."
+    });
+    
+    describe("Socket", function() { 
 
       it("Creates a new Socket object", function() {
-        expect(new Socket("testName", {"test": "test"})).toEqual(test);
-        expect(new Socket(2, {"test": "test"})).not.toEqual(test);
-        expect(new Socket("testName", {"test": "test2"})).not.toEqual(test);
+        expect(new Socket("testName", {"testProp": "testVal"})).toEqual(test);
+        expect(new Socket(2, {"testProp2": "testVal"})).not.toEqual(test);
+        expect(new Socket("testName", {"testProp": "testVal2"})).not.toEqual(test);
       });
 
       it("Gets the name of a Socket object", function() {
@@ -26,7 +38,7 @@ define(["../lib/tcp-simple-chat-tools.js"], function(tools) {
       });
 
       it("Gets the connection socket object of a Socket object", function() {
-        expect(test.getSocket()).toEqual({"test": "test"});
+        expect(test.getSocket()).toEqual({"testProp": "testVal"});
       });
 
       it("Sets the connection socket object of a Socket object", function() {
@@ -36,7 +48,6 @@ define(["../lib/tcp-simple-chat-tools.js"], function(tools) {
     });
 
     describe("generateID", function() {
-      var generateID = tools.generateID;
       var IDs = [];
       var testIDs = 100;
       var notUniqueID = 1337;
@@ -64,13 +75,45 @@ define(["../lib/tcp-simple-chat-tools.js"], function(tools) {
         IDs.push(notUniqueID);
 
         expect(generateID()).toBeUniqueIn(IDs);
-        expect(1337).not.toBeUniqueIn(IDs);
+        expect(notUniqueID).not.toBeUniqueIn(IDs);
       });
     });
 
+    describe("broadcast", function() {
+      beforeEach(function() {
+        broadcast = jasmine.createSpy("broadcast() spy").andCallFake(function(socket, sockets, writeData, excludeSelf) {
+          return [writeData, excludeSelf];
+        });
+      });
+      
+      it("emits a message to all available sockets", function() {
+        expect(broadcast(socket, sockets, writeData, false)[0]).toEqual("Random string test data.");
+        expect(broadcast(socket, sockets, writeData, false)[1]).toBeFalsy();
+      });
+
+      it("emits a message to all available sockets excluding self", function() {
+        expect(broadcast(socket, sockets, writeData, true)[0]).toEqual("Random string test data.");
+        expect(broadcast(socket, sockets, writeData, true)[1]).toBeTruthy();
+      });
+    });
+
+    describe("userCommand", function() {
+
+      beforeEach(function() {
+        userCommand = jasmine.createSpy("userCommand() spy").andCallFake(function(cmd, socket, sockets, id) {
+          return cmd;
+        });
+      });
+
+      it("takes a command and performs an action based on which you send in.", function() {
+        expect(userCommand("help", socket, sockets, 1337)).not.toEqual(userCommand("nickname", socket, sockets, generateID()));
+        expect(userCommand("help", socket, sockets, generateID())).not.toEqual(userCommand("", socket, sockets, generateID()));
+        expect(userCommand("help", socket, sockets, generateID())).toEqual(userCommand("help", socket, sockets, 1337));
+      });
+    });
 
     it("is a group of functions for use in a simple tcp chat server.", function() { 
-
+      expect(tools).toBeDefined();
     });
   });
 });
