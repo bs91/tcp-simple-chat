@@ -101,14 +101,14 @@ define(["../lib/tcp-simple-chat-tools.js"], function(tools) {
 
       beforeEach(function() {
         userCommand = jasmine.createSpy("userCommand() spy").andCallFake(function(cmd, socket, sockets, id) {
-          return cmd;
+          return [cmd, id];
         });
       });
 
       it("takes a command and performs an action based on which you send in.", function() {
         expect(userCommand("help", socket, sockets, 1337)).not.toEqual(userCommand("nickname", socket, sockets, generateID()));
         expect(userCommand("help", socket, sockets, generateID())).not.toEqual(userCommand("", socket, sockets, generateID()));
-        expect(userCommand("help", socket, sockets, generateID())).toEqual(userCommand("help", socket, sockets, 1337));
+        expect(userCommand("help", socket, sockets, 1337)).toEqual(userCommand("help", socket, sockets, 1337));
       });
     });
 
